@@ -1,0 +1,128 @@
+﻿@*
+    Copyright (c) Microsoft. All rights reserved.
+    Licensed under the MIT license. See LICENSE file in the project root for full license information.
+*@
+
+@using Microsoft.Fx.Portability.Reports.Html.Resources
+
+<script>
+    function ToggleDivVisibility(caller) {
+        // extract the generated id (the guid following hide-/show-)
+        var targetId = this.id.substr(5);
+
+        // hide/show the div with that id
+        var targetDiv = document.getElementById(targetId);
+        var currentClass = targetDiv.getAttribute('class');
+        if (this.id.slice(0, 4) === 'show') { // String.prototype.startsWith unavailable in IE
+            // remove the ToggledOff class
+            var newClass = currentClass.replace(/\bToggledOff\b/, '').trim();
+            var buttonToFocus = document.getElementById('hide-' + targetId);
+        }
+        else {
+            // add the ToggledOff class
+            var newClass = currentClass === null
+                ? 'ToggledOff'
+                : currentClass.concat(' ToggledOff').trim();
+            var buttonToFocus = document.getElementById('show-' + targetId);
+        }
+        targetDiv.setAttribute('class', newClass);
+
+        // hide the clicked button
+        this.style.display = 'none';
+
+        // show, focus the other button
+        // (screen readers will read the newly-focused element)
+        buttonToFocus.style.display = 'inline-block';
+        buttonToFocus.focus();
+    }
+
+    // Hook up toggle buttons' click events
+    var toggleButtons = document.getElementsByClassName('ToggleButton');
+    for (var i = 0; i < toggleButtons.length; i++) {
+        toggleButtons[i].addEventListener('click', ToggleDivVisibility);
+    }
+
+    // Turn off any elements that should begin collapsed. Note that this is done with the extra
+    // BeginToggledOff class instead of applying ToggledOff directly to these elements because they should be
+    // visible if javascript is unavailable for some reason.
+    var beginCollapsed = document.getElementsByClassName('BeginToggledOff');
+    for (var i = 0; i < beginCollapsed.length; i++) {
+        var currentClass = beginCollapsed[i].getAttribute('class');
+        beginCollapsed[i].setAttribute('class', currentClass.concat(' ToggledOff').trim());
+    }
+
+    // Toggle the visibility of a column in the portability report detail
+    // table (id='table_portability_details')
+    function ToggleColumnVisibility(columnNumber, visible) {
+        var style = visible ? '' : 'none';
+
+        var tables = document.getElementsByClassName('table_portability_details');
+        for (var table = 0; table < tables.length; table++) {
+            var rows = tables[table].getElementsByTagName('tr');
+
+            var headers = rows[0].getElementsByTagName('th');
+            headers[columnNumber].style.display = style;
+
+            for (var row = 1; row < rows.length; row++) {
+                var cells = rows[row].getElementsByTagName('td')
+                cells[columnNumber].style.display = style;
+            }
+        }
+    }
+
+    // Event handler for checkboxes to hide columns in the portability report detail table.
+    function onToggleColumnVisibility(element) {
+        var columnId = parseInt(element.id.substr(-1));
+        var visible = !element.checked;
+        ToggleColumnVisibility(columnId, visible);
+        // Refresh the rows because showing columns could make error cells visible.
+        ToggleRowVisibility(document.getElementById('row_visibility_checkbox'));
+    }
+
+    function ToggleRowVisibility(element){
+        var style = element.checked ? 'none' : '';
+
+        var tables = document.getElementsByClassName('table_portability_details');
+        for (var table = 0; table < tables.length; table++) {
+            var rows = tables[table].getElementsByTagName('tr');
+            if (style === '') { // show all rows
+                for (var row = 0; row < rows.length; row++)
+                    if (rows[row].style.display === 'none') rows[row].style.display = style; // show previously hidden rows
+            } else {
+                var row = 1;
+                while (row < rows.length) { // work on one Target type at a time.
+                    var typeRow = rows[row];
+                    var typeOrChildVisible = false;
+                    var j = row;
+                    var cells = rows[j].getElementsByTagName('td');
+                    while (cells[0].innerHTML !== '&nbsp;') { // Types are separated by blank rows.
+                        var allCellsSuccess = true;
+                        // No need to check the first column (Target type) and the last column (Recommended changes)
+                        for (var cel = 1; cel < cells.length - 1; cel++) {
+                            var cell = cells[cel];
+                            // Keep rows that have visible errors
+                            if (cell.classList.contains('IconErrorEncoded') && cell.style.display !== 'none') {
+                                allCellsSuccess = false;
+                                typeOrChildVisible = true;
+                                break;
+                            }
+                        }
+                        // Hide all success row
+                        if (allCellsSuccess) rows[j].style.display = style;
+                        else rows[j].style.display = '';
+                        j += 1;
+                        cells = rows[j].getElementsByTagName('td');
+                    }
+                    if (typeOrChildVisible) {
+                        typeRow.style.display = ''; // make sure they are visible
+                        rows[j].style.display = '';
+                    } else {
+                        typeRow.style.display = style; // hide the type row
+                        rows[j].style.display = style;  // hide the blank separator row
+                    }
+                    row = j + 1;
+                }
+            }
+        }
+    }
+</script>

@@ -1,0 +1,73 @@
+﻿@*
+    Copyright (c) Microsoft. All rights reserved.
+    Licensed under the MIT license. See LICENSE file in the project root for full license information.
+*@
+
+@model Microsoft.Fx.Portability.Reports.Html.CompatibilityResultsModel
+
+@using Microsoft.Fx.Portability
+@using Microsoft.Fx.Portability.Reports
+@using Microsoft.Fx.Portability.ObjectModel
+@using Microsoft.Fx.Portability.Reports.Html.Resources
+@using System.Globalization
+@using System.Linq
+
+<h4><abbr title="@Model.Description">@Model.Name</abbr> - @Model.Breaks.Count()</h4>
+<div class="BreakingChangeTable">
+    @if (Model.Breaks.Count() > 0)
+    {
+        <table>
+            <caption>@Model.Name</caption>
+            <thead>
+                <tr>
+                    <th colspan="4"></th>
+                    <th colspan="2">@LocalizedStrings.Version</th>
+                    <th colspan="1"></th>
+                </tr>
+                <tr>
+                    <th>@LocalizedStrings.API</th>
+                    <th>@LocalizedStrings.Details</th>
+                    <th>@LocalizedStrings.Recommendation</th>
+                    <th><div>@LocalizedStrings.Quirked</div></th>
+                    <th><div>@LocalizedStrings.Introduced</div></th>
+                    <th><div>@LocalizedStrings.Reverted</div></th>
+                    <th><div>@LocalizedStrings.Link</div></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (KeyValuePair<BreakingChange, IEnumerable<MemberInfo>> b in Model.Breaks)
+                {
+                    <tr>
+                        <td class="MemberNames">
+                            <ul>
+                                @* .Distinct because the members can appear multiple times if they exist in multiple referenced assemblies *@
+                                @foreach (string member in @b.Value.Select(m => m.ToString()).Distinct().OrderBy(s => s))
+                                {
+                                    // Remove the docid member/type prefix
+                                    var index = member.IndexOf(":");
+                                    var fixedName = index > -1 ? member.Substring(index + 1) : member;
+                                    <li>@fixedName</li>
+                                }
+                            </ul>
+                        </td>
+                        <td class="breakDetails">@{WriteLiteral(Html.ConvertMarkdownToHtml(b.Key.Details));}</td>
+                        <td>@{WriteLiteral(Html.ConvertMarkdownToHtml(b.Key.Suggestion));}</td>
+                        <td class="textCentered">@b.Key.IsQuirked</td>
+                        <td class="textCentered">@b.Key.VersionBroken</td>
+                        <td class="textCentered">@b.Key.VersionFixed</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(b.Key.Link))
+                            {
+                                <a href="@b.Key.Link">@LocalizedStrings.MoreInfo</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="CompatMessage GoodMessage">@string.Format(CultureInfo.CurrentCulture, LocalizedStrings.NoCompatIssuesDetected, Model.Name.ToLowerInvariant()).</p>
+    }
+</div>

@@ -1,0 +1,195 @@
+﻿@*
+   Copyright (c) Microsoft. All rights reserved.
+   Licensed under the MIT license. See LICENSE file in the project root for full license information.
+*@
+
+<style>
+    /* Body style, for the entire document */
+    body {
+        background: #F3F3F4;
+        color: #1E1E1F;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Header1 style, used for the main title */
+    h1 {
+        padding: 10px 0px 10px 10px;
+        font-size: 21pt;
+        background-color: #E2E2E2;
+        border-bottom: 1px #C1C1C2 solid;
+        color: #201F20;
+        margin: 0;
+        font-weight: normal;
+    }
+
+    /* Header2 style, used for "Overview" and other sections */
+    h2 {
+        font-size: 18pt;
+        font-weight: normal;
+        padding: 15px 0 5px 0;
+        margin: 0;
+    }
+
+    /* Header3 style, used for sub-sections, such as project name */
+    h3 {
+        font-weight: normal;
+        font-size: 15pt;
+        margin: 0;
+        padding: 15px 0 5px 0;
+        background-color: transparent;
+    }
+
+    h4 {
+        font-weight: normal;
+        font-size: 13pt;
+        margin: 0;
+        padding: 0 0 0 0;
+        background-color: transparent;
+    }
+
+    /* Paragraph text (for longer informational messages) */
+    p {
+        font-size: 10pt;
+    }
+
+    /* Make sure abbreviations are decorated on all browsers */
+    abbr {
+        text-decoration: none;
+        border-bottom: 1px dotted;
+    }
+
+    /* Table styles */
+    table {
+        border-spacing: 0 0;
+        border-collapse: collapse;
+        font-size: 10pt;
+    }
+
+    th {
+        background: #E7E7E8;
+        border: 1px solid #E7E7E8;
+        text-decoration: none;
+        font-weight: normal;
+        vertical-align: bottom;
+        padding: 3px 6px 3px 6px;
+    }
+
+    td {
+        vertical-align: top;
+        padding: 3px 6px 5px 5px;
+        margin: 0px;
+        border: 1px solid #E7E7E8;
+        background: #F7F7F8;
+    }
+
+    .CompatIssuesHeader {
+        display: inline-block;
+        margin-right: 6px;
+    }
+
+    .breakDetails {
+        min-width: 300px;
+    }
+
+    .BreakingChangeTable {
+        margin-left: 30px;
+    }
+
+    .NoBreakingChanges {
+        -moz-box-shadow: inset 0px 0px 0px 2px green;
+        -webkit-box-shadow: inset 0px 0px 0px 2px green;
+        box-shadow: inset 0px 0px 0px 2px green;
+        font-weight: bold;
+    }
+
+    .FewBreakingChanges {
+        -moz-box-shadow: inset 0px 0px 0px 2px orange;
+        -webkit-box-shadow: inset 0px 0px 0px 2px orange;
+        box-shadow: inset 0px 0px 0px 2px orange;
+        font-weight: bold;
+    }
+
+    .ManyBreakingChanges {
+        -moz-box-shadow: inset 0px 0px 0px 2px #dd0000;
+        -webkit-box-shadow: inset 0px 0px 0px 2px #dd0000;
+        box-shadow: inset 0px 0px 0px 2px #dd0000;
+        font-weight: bold;
+    }
+
+    .CompatMessage {
+        font-style: italic;
+        font-size: 10pt;
+    }
+
+    .GoodMessage {
+        color: darkgreen;
+    }
+
+    .ToggleButton {
+        font-size: 16px;
+        font-family: monospace;
+        padding: 0px 3px;
+        color: #ffffff;
+        border-radius: 4px;
+        border: 1px solid #657298;
+        background-color: #657298;
+        display: inline-block;
+    }
+
+    .ToggleButton:hover {
+        background-color: #7892c2;
+    }
+
+    .ToggledOff {
+        display: none;
+    }
+
+    .MemberNames ul {
+        list-style-type: none;
+        padding: 0px;
+        margin: 0px;
+    }
+
+    .MemberNames li {
+        padding-bottom: 4px;
+    }
+
+    /* Center text, used in the over views cells that contain message level counts */
+    .textCentered {
+        text-align: center;
+    }
+
+    /* invisible text for use in screen reader labels */
+    span.invisibleText {
+        height: 1px;
+        width: 1px;
+        position: absolute;
+        overflow: hidden;
+        top: -10px;
+    }
+
+    /*
+        Applied to the svg containing each support icon, so that element matches the icon's dimensions.
+        Breaks IE/Edge rendering when applied to the image elements as well.
+     */
+    .support-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Padding around the content after the h1 */
+    #content {
+        padding: 0px 12px 12px 12px;
+    }
+
+    .tocItem {
+        font-size: 14pt;
+    }
+
+    .compat-subheader {
+        font-weight: 700;
+        font-style: italic;
+    }
+</style>

@@ -1,0 +1,241 @@
+﻿@*
+    Copyright (c) Microsoft. All rights reserved.
+    Licensed under the MIT license. See LICENSE file in the project root for full license information.
+*@
+
+@model Microsoft.Fx.Portability.Reports.RazorHtmlObject
+
+@using Microsoft.Fx.Portability.Reports
+@using Microsoft.Fx.Portability.Reports.Html.Resources
+@using System.Collections.Generic
+@using System.Globalization
+@using System.Linq
+
+@{
+    var reportingResult = Model.ReportingResult;
+}
+
+@* embedded icons *@
+<svg visibility="hidden" width="0" height="0">
+    <image id="icon-supported" width="18px" height="18px" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABPElEQVR4Xp1Tv0vDUBi8FqeA4NpBcBLcWnQSApncOnTo4FSnjP0DsnXpH5CxiwbHDg4Zuj4oOEXiJgiC4FDcCkLWmIMc1Pfw+eMgQ77v3Xf3Pe51YKGqqisAEwCR1TIAsiAIblSo6xrdHeJR85Xle3mdmCQKb0PsfqyxxzM8K15HZADl/H5+sHpZwYfxyRjTs+kWwKBx8yoHd2mRiuzF8mkJniWH/13u3Fjrs/EdhsdDFHGB/DLXEJBDLh1MWPAhPo1BLB4WX5yQywHR+m3tVe/t97D52CB/ziG0nIgD/qDuYg8WuCcVZ2YGwlJ3YDugkpR/VNcAEx6GEKhERSr71FuO4YCM4XBdwKvecjIlkSnsO0Hyp/GxSeJAdzBKzpOtnPwyyiPdAZhpZptT04tU+zk7s8czeges//s5C5+CwqrR4/gw+AAAAABJRU5ErkJggg=="></image>
+    <image id="icon-unsupported" width="18px" height="18px" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABQElEQVR4XqWTvUoEQRCE6wYPZUA80AfwAQz23uCMjA7MDRQEIzPBVEyNTQUFIw00vcQTTMzuAh/AxEQQT8HF/3G/oGGnEUGuoNnd6qoZuqltyKEsyzVJq5I6rnUp6SjGeGhESikzzlc1eL7opfuVbrqbU1Zw9NCgtQMaZpY0eNnaaL2fHusvTK5vKu7sjSS1Y4y3QUA6K3e3Mau5UFDyMP7tYF9o8cAHZv68vipoIJg971PZIZ5HiwdvYGGvFVFHmGmZ2MxwmQYPXubPl9Up0tfoMQGetXd6mRbvhBw+boZ6WF7Mbv1+GsHRk0fQmPAH1GfmZirbCfDJ61tw3Px8/8pZsPAG4jlVhcPgZ7adwNWBB68lkRQWFiTgFlbnLY3DGGM7izIJIyT/jjIvEJw6fdJTc6krDzh6aMwMP9bvDH4ADSsa9uSWVJkAAAAASUVORK5CYII="></image>
+</svg>
+
+<table id="@LocalizedStrings.PortabilitySummary">
+    <caption>@LocalizedStrings.PortabilitySummary</caption>
+    <tbody>
+        <tr>
+            <th>@LocalizedStrings.AssemblyHeader</th>
+            @foreach (var target in Model.TargetHeaders)
+            {
+                <th>@target</th>
+            }
+        </tr>
+
+        @*Writing the summary body information here.*@
+        @foreach (var assembly in Model.OrderedAssembliesByIdentity)
+        {
+            <tr>
+                <td>
+                    <strong>
+                        <a href="#@assembly.SourceAssembly">
+                            <span class="assembly-name">@assembly.SourceAssembly</span>
+                            @if (!string.IsNullOrEmpty(assembly.SourceAssembly.TargetFrameworkMoniker))
+                            {
+                                <span class="assembly-tfm">(@assembly.SourceAssembly.TargetFrameworkMoniker)</span>
+                            }
+                        </a>
+                    </strong>
+                </td>
+                @foreach (var usageData in @assembly.UsageData)
+                {
+                    <td class="text-center">@usageData.PortabilityIndex.ToString("P2")</td>
+                }
+            </tr>
+        }
+        @foreach (var invalidAssembly in reportingResult.GetAssembliesWithError())
+        {
+            var fileName = System.IO.Path.GetFileName(invalidAssembly);
+            var message = string.Format(CultureInfo.CurrentCulture, LocalizedStrings.AssemblyIsInvalid, fileName);
+            <tr>
+                <td>@message</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div id="details">
+    <h3>@LocalizedStrings.HideRows</h3>
+    <input type="checkbox" id="row_visibility_checkbox" onchange="ToggleRowVisibility(this)">
+    <label for="row_visibility_checkbox">@LocalizedStrings.HideRowsWithNoProblems</label>
+    @{
+        var detailColumnHeaders = new List<string>();
+        detailColumnHeaders.Add(LocalizedStrings.TargetTypeHeader);
+        detailColumnHeaders.AddRange(Model.TargetHeaders);
+        detailColumnHeaders.Add(LocalizedStrings.RecommendedChanges);
+
+        <h3>@LocalizedStrings.HideColumns</h3>
+        <form>
+            @* It doesn't make sense to hide the first column (Target type), which lists
+                names of the types and members that have possible problems in porting. *@
+            @for (int i = 1; i < detailColumnHeaders.Count; i++)
+            {
+                var id = "checkbox" + i.ToString();
+                <input type="checkbox" id="@id" onchange='onToggleColumnVisibility(this)'>
+                <label for="@id">@detailColumnHeaders[i]</label>
+            }
+        </form>
+    }
+
+    @foreach (var assembly in Model.OrderedAssembliesByIdentity)
+    {
+        // avoid writing blank details tables (happens if a non-.NET assembly is analyzed)
+        bool isDotNETAssembly = false;
+        foreach (var type in Model.MissingTypes)
+        {
+            if (type.UsedIn.Contains(assembly.SourceAssembly))
+            {
+                isDotNETAssembly = true;
+                break;
+            }
+        }
+        if (!isDotNETAssembly)
+        {
+            continue;
+        }
+
+        var assemblyName = reportingResult.GetNameForAssemblyInfo(assembly.SourceAssembly);
+        <h3 id="@assembly.SourceAssembly" tabindex="0">
+            <span class="assembly-name">@assembly.SourceAssembly</span>
+            @if (!string.IsNullOrEmpty(@assembly.SourceAssembly.TargetFrameworkMoniker))
+            {
+                <span class="assembly-tfm">(@assembly.SourceAssembly.TargetFrameworkMoniker)</span>
+            }
+        </h3>
+        var usedUnresolvedAssembly = Model.GetUnresolvedAssemblies(assembly);
+        if (usedUnresolvedAssembly.Count > 0)
+        {
+            <table>
+                <caption>@LocalizedStrings.MissingAssemblies</caption>
+                <tbody>
+                    <tr><th>@LocalizedStrings.MissingAssemblies</th></tr>
+                    @foreach (var name in usedUnresolvedAssembly)
+                    {
+                        <tr><td>@name</td></tr>
+                    }
+                </tbody>
+            </table>
+            <a>&nbsp;</a> @*insert a blank line for readability*@
+        }
+
+        <table class="table_portability_details">
+            <caption>@LocalizedStrings.PortabilityDetails</caption>
+            <tbody>
+                <tr>
+                    @foreach (var header in detailColumnHeaders)
+                    {
+                        <th>@header</th>
+                    }
+                </tr>
+                @*  IsMissing  => the type is entirely unsupported
+                    !IsMissing => only some members are unsupported *@
+                @foreach (var type in Model.MatchingMissingTypes(assembly))
+                {
+                    var name = Model.RemoveTypeOrMemberPrefix(type.TypeName);
+                    <tr>
+                        <td>@name</td>
+                        @foreach (var version in Model.GetMatchingTargetsAndSupportedVersions(type.TargetVersionStatus))
+                        {
+                            @Html.TargetSupportCell(version)
+                        }
+                        <td>@type.RecommendedChanges</td>
+                    </tr>
+                    @*write a row for each of the type's missing members*@
+                    foreach (var member in type.MissingMembers.OrderBy(y => y.MemberName).ToList())
+                    {
+                        var formattedName = member.MemberName.Substring(type.TypeName.Length + 1);
+                        <tr>
+                            <td style="padding-left:2em">@formattedName</td>
+                            @foreach (var version in Model.GetMatchingTargetsAndSupportedVersions(member.TargetVersionStatus))
+                            {
+                                @Html.TargetSupportCell(version)
+                            }
+                            <td>@member.RecommendedChanges</td>
+                        </tr>
+                    }
+                    <tr>
+                        @foreach (var column in detailColumnHeaders)
+                        {
+                            <td>&nbsp;</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <p>
+            <a href="#@LocalizedStrings.PortabilitySummary">@LocalizedStrings.BackToSummary</a>
+        </p>
+    }
+</div>
+
+@if (Model.NuGetPackages != null && Model.NuGetPackages.Any())
+{
+    <div id="nugetpackageinfo">
+        <h3>@LocalizedStrings.AvailableNuGetPackages</h3>
+        @{
+            bool showAssemblyName = Model.NuGetPackages.Any(p => !string.IsNullOrEmpty(p.AssemblyInfo));
+
+            var nugetColumnHeaders = new List<string>();
+            nugetColumnHeaders.Add(LocalizedStrings.PackageIdHeader);
+            nugetColumnHeaders.AddRange(Model.TargetHeaders);
+
+            if (showAssemblyName)
+            {
+                nugetColumnHeaders.Add(LocalizedStrings.AssemblyHeader);
+            }
+        }
+
+        <table>
+            <caption>@LocalizedStrings.AvailableNuGetPackages</caption>
+            <tbody>
+                <tr>
+                    @foreach (var header in nugetColumnHeaders)
+                    {
+                        <th>@header</th>
+                    }
+                </tr>
+
+                @foreach (var nugetPackage in Model.NuGetPackages)
+                {
+                    <tr>
+                        <td>@nugetPackage.PackageId</td>
+
+                        @foreach (var target in Model.Targets)
+                        {
+                            string version = "";
+                            if (nugetPackage.SupportedVersions.TryGetValue(target, out version))
+                            {
+                                <td>@version</td>
+                            }
+                            else
+                            {
+                                <td>@LocalizedStrings.NotSupported</td>
+                            }
+                        }
+
+                        @if (!string.IsNullOrEmpty(nugetPackage.AssemblyInfo))
+                        {
+                            <td>@nugetPackage.AssemblyInfo</td>
+                        }
+
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+
+        <p>
+            <a href="#@LocalizedStrings.PortabilitySummary">@LocalizedStrings.BackToSummary</a>
+        </p>
+    </div>
+}

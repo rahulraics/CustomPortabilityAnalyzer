@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>The core data structures for .NET Portability Analyzer in Offline mode</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="4.6.2" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <DataPath>$(OutputFullPath)\.data\</DataPath>
+    <BreakingChangePath>$(OutputFullPath)\docs\BreakingChanges\</BreakingChangePath>
+    <CatalogDataFile>$(DataPath)catalog.bin</CatalogDataFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(CatalogDataFile)" Condition="Exists($(CatalogDataFile))">
+      <Link>data\catalog.bin</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(BreakingChangePath)*.md">
+      <Link>data\%(Filename)%(Extension)</Link>
+      <BreakingChange>true</BreakingChange>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.Fx.Portability.Reports.Json\Microsoft.Fx.Portability.Reports.Json.csproj" />
+    <ProjectReference Include="..\Microsoft.Fx.Portability\Microsoft.Fx.Portability.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\LocalizedStrings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>LocalizedStrings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\LocalizedStrings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>LocalizedStrings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <Target Name="DownloadContent" BeforeTargets="BeforeBuild">
+    <Warning Text="Could not find catalog.bin. Please run init.ps1 to download the file" Condition="!Exists($(CatalogDataFile))" />
+  </Target>
+
+</Project>

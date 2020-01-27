@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\ApiPort\ApiPort\ApiPort.csproj" />
+    <ProjectReference Include="..\src\ApiPort\ApiPort\ApiPort.Offline.csproj" />
+    <ProjectReference Include="..\src\lib\Microsoft.Fx.Portability\Microsoft.Fx.Portability.csproj" />
+  </ItemGroup>
+
+</Project>

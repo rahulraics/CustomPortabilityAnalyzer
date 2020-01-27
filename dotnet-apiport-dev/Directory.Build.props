@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Import Project="$(MicrobuildSigningPluginDirectory)build\Microbuild.Plugins.Signing.props" Condition="Exists('$(MicrobuildSigningPluginDirectory)build\Microbuild.Plugins.Signing.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputDrop>$(TF_BUILD_BINARIESDIRECTORY)</OutputDrop>
+    <NoWarn>$(NoWarn),1570,1572,1573,1574,1591,1701</NoWarn>
+    <Features>IOperation;$(Features)</Features>
+    <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)\rules.ruleset</CodeAnalysisRuleSet>
+    <WriteVersionInfoToBuildLog>True</WriteVersionInfoToBuildLog>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LicenseDocumentDirectory>$(MSBuildThisFileDirectory)\docs\LicenseTerms</LicenseDocumentDirectory>
+    <FullLicenseFile>$(MSBuildThisFileDirectory)\LICENSE.txt</FullLicenseFile>
+    <OutputFullPath>$(MSBuildThisFileDirectory)</OutputFullPath>
+    <OutputDrop Condition=" '$(OutputDrop)' == '' ">$(OutputFullPath)bin\$(Configuration)\</OutputDrop>
+    <RawBinariesDropDirectory Condition=" '$(RawBinariesDropDirectory)' == '' ">$(OutputDrop)\raw\binaries</RawBinariesDropDirectory>
+    <RawSymbolsDropDirectory Condition=" '$(RawSymbolsDropDirectory)' == '' ">$(OutputDrop)\raw\symbols</RawSymbolsDropDirectory>
+    <OutputPath>$(OutputDrop)\$(MSBuildProjectName)\</OutputPath>
+    <DocumentationFile>$(OutputPath)$(MSBuildProjectName).xml</DocumentationFile>
+    <BaseIntermediateOutputPath>$(OutputFullPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+  <!-- Assembly signing not supported on Linux, yet.
+    `CS7027: Error signing output with public key from file` -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\PortabilityTools.snk</AssemblyOriginatorKeyFile>
+    <DefineConstants>$(DefineConstants);FEATURE_STRONGNAMESIGNING</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Trying to mitigate the number of warnings that the solution contains by
+    adding this into our Release builds.  As a result, it should be caught in
+    our PRs because of the CI builds -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsTest>false</IsTest>
+    <IsTest Condition="$(MSBuildProjectName.ToLowerInvariant().Contains('test'))">true</IsTest>
+  </PropertyGroup>
+
+  <!--NuGet properties-->
+  <PropertyGroup>
+    <Authors>Microsoft</Authors>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/Microsoft/dotnet-apiport</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>.NET portability apiport</PackageTags>
+    <Copyright>Copyright 2017</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)\LICENSE.txt" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+  <!-- Some of the project types do not have a pack target. This creates a default empty pack target that will be overridden in supported project types -->
+  <Target Name="Pack">
+  </Target>
+</Project>

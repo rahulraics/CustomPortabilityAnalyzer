@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ApiPort": {
+      "commandName": "Project",
+      "commandLineArgs": "analyze -f C:\\Users\\Rahul\\Downloads\\dotnet-apiport-dev\\src\\ApiPort\\ApiPort  -r  html -t \".NET Core,Version=v3.1\""
+    }
+  }
+}
